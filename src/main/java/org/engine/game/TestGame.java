@@ -16,41 +16,32 @@ import org.engine.core.WindowManager;
 import org.engine.core.entity.Entity;
 import org.engine.core.entity.Material;
 import org.engine.core.entity.Model;
+import org.engine.core.entity.SceneManager;
 import org.engine.core.entity.Texture;
 import org.engine.core.entity.terrain.Terrain;
 import org.engine.core.lighting.DirectionalLight;
 import org.engine.core.lighting.PointLight;
 import org.engine.core.lighting.SpotLight;
 import org.engine.core.rendering.RenderManager;
+import org.engine.utils.Consts;
 
 public class TestGame implements ILogic {
-
-    private static final float CAMERA_MOVE_SPEED = 0.1f;
-    private static final float MOUSE_SENSITIVITY = 0.2f;
 
     private final RenderManager renderer;
     private final ObjectLoader loader;
     private final WindowManager window;
+    private final SceneManager sceneManager;
 
-    private List<Entity> entities;
-    private List<Terrain> terrains;
-    
     private Camera camera;
-
     Vector3f cameraInc;
-
-    private float lightAngle;
-    private DirectionalLight directionalLight;
-    private PointLight[] pointLights;
-    private SpotLight[] spotLights;
 
     public TestGame() {
         renderer = new RenderManager();
         window = Launcher.getWindow();
         loader = new ObjectLoader();
+        sceneManager = new SceneManager(-90);
         camera = new Camera();
         cameraInc = new Vector3f(0, 0, 0);
-        lightAngle = -90;
     }
 
     @Override
@@ -60,50 +51,54 @@ public class TestGame implements ILogic {
         Model model = loader.loadOBJModel("/models/cube.obj");
         model.setTexture(new Texture(loader.loadTexture("textures/obamaface.png")), 1f);
 
-        terrains = new ArrayList<>();
         Terrain terrain = new Terrain(new Vector3f(0, -1, -800), loader, new Material(new Texture(loader.loadTexture("textures/terrain.png")), 0.1f));
         Terrain terrain2 = new Terrain(new Vector3f(-800, -1, -800), loader, new Material(new Texture(loader.loadTexture("textures/flowers.png")), 0.1f));
-        terrains.add(terrain); terrains.add(terrain2);
+        sceneManager.addTerrain(terrain); sceneManager.addTerrain(terrain2);
 
-        entities = new ArrayList<>();
         Random rand = new Random();
-        int factor = 100;
+        int factor = 265;
         for (int i = 0; i < 2 * factor; i++) {
             float x = rand.nextFloat() * factor - (factor / 2);
             float y = rand.nextFloat() * factor - (factor / 2);
             float z = rand.nextFloat() * (-3 * factor);
-            entities.add(
-                new Entity(model, new Vector3f(x, y, z),
-                new Vector3f(rand.nextFloat() * 180, rand.nextFloat() * 180, 0),
+            sceneManager.addEntity(new Entity(
+                model,
+                new Vector3f(x, 2, z),
+                new Vector3f(0, 0, 0),
                 3f)
             );
         }
-        entities.add(new Entity(model, new Vector3f(0, 0, -2f), new Vector3f(0, 0, 0), 1));
+        sceneManager.addEntity(new Entity(model, new Vector3f(0, 0, -2f), new Vector3f(0, 0, 0), 1));
 
         float lightIntensity;
         Vector3f lightPosition, lightColor;
 
         // Point Lights
-        lightIntensity = 1.0f;
-        lightPosition = new Vector3f(-0.5f, -0.5f, -3.2f);
+        lightIntensity = 50000f;
+        lightPosition = new Vector3f(0f, -50f, 0f);
         lightColor = new Vector3f(1, 1, 1);
         PointLight pointLight = new PointLight(lightColor, lightPosition, lightIntensity, 0, 0, 1);
 
         // Spot Lights
-        Vector3f coneDirection = new Vector3f(0, 0, -1);
-        float cutoff = (float) Math.cos(Math.toRadians(140));
-        SpotLight spotLight0 = new SpotLight(new PointLight(lightColor, new Vector3f(0, 0, -4.6f), lightIntensity, 0, 0, 1), coneDirection, cutoff);
+        Vector3f coneDirection = new Vector3f(0, -50, 0);
+        float cutoff = (float) Math.cos(Math.toRadians(1));
+        lightIntensity = 50000f;
+        lightColor = new Vector3f(0, 0.25f, 0);
+        lightPosition = new Vector3f(1f, 50f, -5f);
+        SpotLight spotLight0 = new SpotLight(new PointLight(lightColor, lightPosition, lightIntensity, 0, 0, 1), coneDirection, cutoff);
+        lightColor = new Vector3f(0.25f, 0, 0);
+        lightPosition = new Vector3f(1f, 50f, -5f);
         SpotLight spotLight1 = new SpotLight(new PointLight(lightColor, lightPosition, lightIntensity, 0, 0, 1), coneDirection, cutoff);
         spotLight1.getPointLight().setPosition(new Vector3f(0.5f, 0.5f, -3.6f));
 
         // Directional Light
-        lightIntensity = 0.0f;
-        lightPosition = new Vector3f(-1, -10, 0);
+        lightIntensity = 1;
+        lightPosition = new Vector3f(-1, 0, 0);
         lightColor = new Vector3f(1, 1, 1);
-        directionalLight = new DirectionalLight(lightColor, lightPosition, lightIntensity);
+        sceneManager.setDirectionalLight(new DirectionalLight(lightColor, lightPosition, lightIntensity));
 
-        pointLights = new PointLight[] {pointLight};
-        spotLights = new SpotLight[] {spotLight0, spotLight1};
+        sceneManager.setPointLights(new PointLight[] {pointLight});
+        sceneManager.setSpotLights(new SpotLight[] {spotLight0, spotLight1});
     }
 
     @Override
@@ -121,74 +116,73 @@ public class TestGame implements ILogic {
             cameraInc.y = -10;
         if(window.isKeyPressed(GLFW.GLFW_KEY_SPACE))
             cameraInc.y = 10;
-        if(window.isKeyPressed(GLFW.GLFW_KEY_E))
-            camera.moveRotation(0.0f, 0.5f, 0.0f);
         if(window.isKeyPressed(GLFW.GLFW_KEY_Q))
-            camera.moveRotation(0.0f, -0.5f, 0.0f);
-        if(window.isKeyPressed(GLFW.GLFW_KEY_R))
-            camera.moveRotation(-0.5f, 0.0f, 0.0f);
-        if(window.isKeyPressed(GLFW.GLFW_KEY_F))
-            camera.moveRotation(0.5f, 0.0f, 0.0f);
-        if(window.isKeyPressed(GLFW.GLFW_KEY_K))
             camera.moveRotation(0.0f, 0.0f, -0.5f);
-        if(window.isKeyPressed(GLFW.GLFW_KEY_L))
+        if(window.isKeyPressed(GLFW.GLFW_KEY_E))
             camera.moveRotation(0.0f, 0.0f, 0.5f);
-        if(window.isKeyPressed(GLFW.GLFW_KEY_O))
-            pointLights[0].getPosition().x += 0.1f;
-        if(window.isKeyPressed(GLFW.GLFW_KEY_P))
-            pointLights[0].getPosition().x -= 0.1f;
-        float lightPosition = spotLights[0].getPointLight().getPosition().z;
-        if(window.isKeyPressed(GLFW.GLFW_KEY_N))
-            spotLights[0].getPointLight().getPosition().z = lightPosition + 0.1f;
-        if(window.isKeyPressed(GLFW.GLFW_KEY_M))
-            spotLights[0].getPointLight().getPosition().z = lightPosition - 0.1f;
+        if(window.isKeyPressed(GLFW.GLFW_KEY_R))
+            camera.setRotation(camera.getRotation().x, camera.getRotation().y, 0);
     }
 
     @Override
     public void update(float interval, MouseInput mouse) {
-        camera.movePosition(cameraInc.x * CAMERA_MOVE_SPEED, cameraInc.y * CAMERA_MOVE_SPEED, cameraInc.z * CAMERA_MOVE_SPEED);
+        camera.movePosition(cameraInc.x * Consts.CAMERA_MOVE_SPEED, cameraInc.y * Consts.CAMERA_MOVE_SPEED, cameraInc.z * Consts.CAMERA_MOVE_SPEED);
 
         if (mouse.isRightButtonPress()) {
             Vector2f rotVec = mouse.getDisplVec();
-            camera.moveRotation(rotVec.x * MOUSE_SENSITIVITY, rotVec.y * MOUSE_SENSITIVITY, 0);
+            camera.moveRotation(rotVec.x * Consts.MOUSE_SENSITIVITY, rotVec.y * Consts.MOUSE_SENSITIVITY, 0);
         }
 
-        //entity.incRotation(0f, 0.25f, 0f);
-
-        lightAngle += 0.1f;
-        if(lightAngle > 90) {
-            directionalLight.setIntensity(0);
-            if (lightAngle >= 360)
-                lightAngle = -90;
+        sceneManager.incSpotAngle(0.15f);
+        sceneManager.setSpotAngle(sceneManager.getSpotInc() * 0.15f);
+        if (sceneManager.getSpotAngle() > 4) {
+            sceneManager.setSpotInc(-1);
         }
-        else if (lightAngle <= -80 || lightAngle >= 80) {
-            float factor = 1 - (Math.abs(lightAngle) - 80) / 10.0f;
-            directionalLight.setIntensity(factor);
-            directionalLight.getColor().y = Math.max(factor, 0.9f);
-            directionalLight.getColor().z = Math.max(factor, 0.5f);
+        else if (sceneManager.getSpotAngle() < 1) {
+            sceneManager.setSpotInc(1);
+        }
+
+        double spotAngleRad = Math.toRadians(sceneManager.getSpotAngle());
+        Vector3f coneDir = sceneManager.getSpotLights()[0].getPointLight().getPosition();
+        coneDir.x = (float) Math.sin(spotAngleRad);
+
+        coneDir = sceneManager.getSpotLights()[1].getPointLight().getPosition();
+        coneDir.z = (float) Math.cos(spotAngleRad);
+
+        sceneManager.incLightAngle(1.1f);
+        if(sceneManager.getLightAngle() > 90) {
+            sceneManager.getDirectionalLight().setIntensity(0);
+            if (sceneManager.getLightAngle() >= 360)
+                sceneManager.setLightAngle(-90);
+        }
+        else if (sceneManager.getLightAngle() <= -80 || sceneManager.getLightAngle() >= 80) {
+            float factor = 1 - (Math.abs(sceneManager.getLightAngle()) - 80) / 10.0f;
+            sceneManager.getDirectionalLight().setIntensity(factor);
+            sceneManager.getDirectionalLight().getColor().y = Math.max(factor, 0.9f);
+            sceneManager.getDirectionalLight().getColor().z = Math.max(factor, 0.5f);
         }
         else {
-            directionalLight.setIntensity(1);
-            directionalLight.getColor().x = 1;
-            directionalLight.getColor().y = 1;
-            directionalLight.getColor().z = 1;        
+            sceneManager.getDirectionalLight().setIntensity(1);
+            sceneManager.getDirectionalLight().getColor().x = 1;
+            sceneManager.getDirectionalLight().getColor().y = 1;
+            sceneManager.getDirectionalLight().getColor().z = 1;        
         }
-        double angRad = Math.toRadians(lightAngle);
-        directionalLight.getDirection().x = (float)Math.sin(angRad);
-        directionalLight.getDirection().y = (float)Math.cos(angRad);
+        double angRad = Math.toRadians(sceneManager.getLightAngle());
+        sceneManager.getDirectionalLight().getDirection().x = (float)Math.sin(angRad);
+        sceneManager.getDirectionalLight().getDirection().y = (float)Math.cos(angRad);
 
-        for (Entity entity : entities) {
+        for (Entity entity : sceneManager.getEntities()) {
             renderer.processEntity(entity);
         }
         
-        for (Terrain terrain : terrains) {
+        for (Terrain terrain : sceneManager.getTerrains()) {
             renderer.processTerrain(terrain);
         }
     }
 
     @Override
     public void render() {
-        renderer.render(camera, directionalLight, pointLights, spotLights);
+        renderer.render(camera, sceneManager);
     }
 
     @Override
