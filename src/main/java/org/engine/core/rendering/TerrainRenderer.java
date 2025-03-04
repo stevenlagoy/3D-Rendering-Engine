@@ -38,7 +38,11 @@ public class TerrainRenderer implements IRenderer {
         shader.createFragmentShader(Utils.loadResource("/shaders/terrain_fragment.fs"));
         shader.link();
         shader.createUniform("projectionMatrix");
-        shader.createUniform("textureSampler");
+        shader.createUniform("backgroundTexture");
+        shader.createUniform("redTexture");
+        shader.createUniform("greenTexture");
+        shader.createUniform("blueTexture");
+        shader.createUniform("blendMap");
         shader.createUniform("transformationMatrix");
         shader.createUniform("viewMatrix");
         shader.createUniform("ambientLight");
@@ -70,9 +74,16 @@ public class TerrainRenderer implements IRenderer {
         GL20.glEnableVertexAttribArray(0);
         GL20.glEnableVertexAttribArray(1);
         GL20.glEnableVertexAttribArray(2);
+
+        RenderManager.enableCulling();
+
+        shader.setUniform("backgroundTexture", 0);
+        shader.setUniform("redTexture", 1);
+        shader.setUniform("greenTexture", 2);
+        shader.setUniform("blueTexture", 3);
+        shader.setUniform("blendMap", 4);
+        
         shader.setUniform("material", model.getMaterial());
-        GL13.glActiveTexture(GL13.GL_TEXTURE0); // match value set in uniform
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, model.getTexture().getId());
     }
 
     @Override
@@ -85,7 +96,17 @@ public class TerrainRenderer implements IRenderer {
 
     @Override
     public void prepare(Object terrain, Camera camera) {
-        shader.setUniform("textureSampler", 0);
+        GL13.glActiveTexture(GL13.GL_TEXTURE0); // match value set in uniform
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, ((Terrain) terrain).getBlendMapTerrain().getBackground().getTextureID());
+        GL13.glActiveTexture(GL13.GL_TEXTURE1); // match value set in uniform
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, ((Terrain) terrain).getBlendMapTerrain().getRedTexture().getTextureID());
+        GL13.glActiveTexture(GL13.GL_TEXTURE2); // match value set in uniform
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, ((Terrain) terrain).getBlendMapTerrain().getGreenTexture().getTextureID());
+        GL13.glActiveTexture(GL13.GL_TEXTURE3); // match value set in uniform
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, ((Terrain) terrain).getBlendMapTerrain().getBlueTexture().getTextureID());
+        GL13.glActiveTexture(GL13.GL_TEXTURE4); // match value set in uniform
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, ((Terrain) terrain).getBlendMap().getTextureID());
+
         shader.setUniform("transformationMatrix", Transformation.createTransformationMatrix((Terrain) terrain));
         shader.setUniform("viewMatrix", Transformation.getViewMatrix(camera));
     }

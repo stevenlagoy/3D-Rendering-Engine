@@ -45,19 +45,13 @@ public class ShaderManager {
         createUniform(uniformName + ".color");
         createUniform(uniformName + ".position");
         createUniform(uniformName + ".intensity");
-        createUniform(uniformName + ".constant");
-        createUniform(uniformName + ".linear");
-        createUniform(uniformName + ".exponent");
+        createUniform(uniformName + ".att.constant");
+        createUniform(uniformName + ".att.linear");
+        createUniform(uniformName + ".att.exponent");
     }
 
     public void createSpotLightUniform(String uniformName) throws Exception {
-        createUniform(uniformName + ".pl.color");
-        createUniform(uniformName + ".pl.position");
-        createUniform(uniformName + ".pl.intensity");
-        createUniform(uniformName + ".pl.constant");
-        createUniform(uniformName + ".pl.linear");
-        createUniform(uniformName + ".pl.exponent");
-
+        createPointLightUniform(uniformName + ".pl");
         createUniform(uniformName + ".coneDirection");
         createUniform(uniformName + ".cutoff");
     }
@@ -92,9 +86,9 @@ public class ShaderManager {
         setUniform(uniformName + ".color", light.getColor());
         setUniform(uniformName + ".position", light.getPosition());
         setUniform(uniformName + ".intensity", light.getIntensity());
-        setUniform(uniformName + ".constant", light.getConstant());
-        setUniform(uniformName + ".linear", light.getLinear());
-        setUniform(uniformName + ".exponent", light.getExponent());
+        setUniform(uniformName + ".att.constant", light.getAttenuation().getConstant());
+        setUniform(uniformName + ".att.linear", light.getAttenuation().getLinear());
+        setUniform(uniformName + ".att.exponent", light.getAttenuation().getExponent());
     }
 
     public void setUniform(String uniformName, SpotLight light) {
@@ -211,8 +205,15 @@ public class ShaderManager {
 
     public void cleanup() {
         unbind();
-        if (programID != 0)
+        if (vertexShaderID != 0) {
+            GL20.glDeleteShader(vertexShaderID);
+        }
+        if (fragmentShaderID != 0) {
+            GL20.glDeleteShader(fragmentShaderID);
+        }
+        if (programID != 0) {
             GL20.glDeleteProgram(programID);
+        }
     }
 
 }

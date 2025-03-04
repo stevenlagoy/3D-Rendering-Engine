@@ -15,8 +15,7 @@ public class SpotLight {
     }
 
     public SpotLight(SpotLight spotLight) {
-        this.pointLight = spotLight.getPointLight();
-        this.coneDirection = spotLight.getConeDirection();
+        this(new PointLight(spotLight.getPointLight()), new Vector3f(spotLight.getConeDirection()), 0);
         this.cutoff = spotLight.getCutoff();
     }
 

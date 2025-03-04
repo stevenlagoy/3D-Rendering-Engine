@@ -29,19 +29,18 @@ public class Utils {
     }
 
     public static String loadResource(String filename) throws Exception {
-        String result;
-        try (InputStream in = Utils.class.getResourceAsStream(filename)) {
+        String resourcePath = filename.startsWith("/") ? filename : "/" + filename;
+        try (InputStream in = Utils.class.getResourceAsStream(resourcePath)) {
             if (in == null) {
                 throw new Exception("Resource not found: " + filename);
             }
             try (Scanner scanner = new Scanner(in, StandardCharsets.UTF_8)) {
-                result = scanner.useDelimiter("\\A").next();
+                return scanner.useDelimiter("\\A").next();
             }
         }
-        return result;
     }
 
-    public static List<String> readAllLines (String fileName) {
+    public static List<String> readAllLines(String fileName) {
         List<String> list = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new InputStreamReader(Class.forName(Launcher.class.getName()).getResourceAsStream(fileName)))) {
             String line;

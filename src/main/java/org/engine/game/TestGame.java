@@ -6,6 +6,7 @@ import java.util.Random;
 
 import org.joml.Vector2f;
 import org.joml.Vector3f;
+import org.joml.Vector4f;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
 import org.engine.core.Camera;
@@ -18,7 +19,9 @@ import org.engine.core.entity.Material;
 import org.engine.core.entity.Model;
 import org.engine.core.entity.SceneManager;
 import org.engine.core.entity.Texture;
+import org.engine.core.entity.terrain.BlendMapTerrain;
 import org.engine.core.entity.terrain.Terrain;
+import org.engine.core.entity.terrain.TerrainTexture;
 import org.engine.core.lighting.DirectionalLight;
 import org.engine.core.lighting.PointLight;
 import org.engine.core.lighting.SpotLight;
@@ -40,7 +43,7 @@ public class TestGame implements ILogic {
         window = Launcher.getWindow();
         loader = new ObjectLoader();
         sceneManager = new SceneManager(-90);
-        camera = new Camera();
+        camera = new Camera(new Vector3f(0, 0, 0), new Vector3f(0, 0, 0));
         cameraInc = new Vector3f(0, 0, 0);
     }
 
@@ -48,15 +51,26 @@ public class TestGame implements ILogic {
     public void init() throws Exception {
         renderer.init();
 
-        Model model = loader.loadOBJModel("/models/cube.obj");
-        model.setTexture(new Texture(loader.loadTexture("textures/obamaface.png")), 1f);
+        Model model = loader.loadOBJModel("/models/tree.obj");
+        model.getMaterial().setDisableCulling(true);
+        model.setTexture(new Texture(loader.loadTexture("textures/green.png")), 1f);
 
-        Terrain terrain = new Terrain(new Vector3f(0, -1, -800), loader, new Material(new Texture(loader.loadTexture("textures/terrain.png")), 0.1f));
-        Terrain terrain2 = new Terrain(new Vector3f(-800, -1, -800), loader, new Material(new Texture(loader.loadTexture("textures/flowers.png")), 0.1f));
+        TerrainTexture backgroundTexture = new TerrainTexture(loader.loadTexture("textures/terrain.png"));
+        TerrainTexture redTexture = new TerrainTexture(loader.loadTexture("textures/flowers.png"));
+        TerrainTexture greenTexture = new TerrainTexture(loader.loadTexture("textures/stone.png"));
+        TerrainTexture blueTexture = new TerrainTexture(loader.loadTexture("textures/dirt.png"));
+        TerrainTexture blendMap = new TerrainTexture(loader.loadTexture("textures/blendMap.png"));
+
+        BlendMapTerrain blendMapTerrain = new BlendMapTerrain(backgroundTexture, redTexture, greenTexture, blueTexture);
+
+        Terrain terrain = new Terrain(new Vector3f(0, 1, -800), loader,
+            new Material(new Vector4f(0.0f, 0.0f, 0.0f, 0.0f), 0.1f), blendMapTerrain, blendMap);
+        Terrain terrain2 = new Terrain(new Vector3f(-800, -1, -800), loader,
+            new Material(new Vector4f(0.0f, 0.0f, 0.0f, 0.0f), 0.1f), blendMapTerrain, blendMap);
         sceneManager.addTerrain(terrain); sceneManager.addTerrain(terrain2);
 
         Random rand = new Random();
-        int factor = 265;
+        int factor = 300;
         for (int i = 0; i < 2 * factor; i++) {
             float x = rand.nextFloat() * factor - (factor / 2);
             float y = rand.nextFloat() * factor - (factor / 2);
@@ -64,11 +78,10 @@ public class TestGame implements ILogic {
             sceneManager.addEntity(new Entity(
                 model,
                 new Vector3f(x, 2, z),
-                new Vector3f(0, 0, 0),
-                3f)
+                new Vector3f(-90, 0, 0),
+                0.1f)
             );
         }
-        sceneManager.addEntity(new Entity(model, new Vector3f(0, 0, -2f), new Vector3f(0, 0, 0), 1));
 
         float lightIntensity;
         Vector3f lightPosition, lightColor;
@@ -77,7 +90,9 @@ public class TestGame implements ILogic {
         lightIntensity = 50000f;
         lightPosition = new Vector3f(0f, -50f, 0f);
         lightColor = new Vector3f(1, 1, 1);
-        PointLight pointLight = new PointLight(lightColor, lightPosition, lightIntensity, 0, 0, 1);
+        PointLight.Attenuation attenuation = new PointLight.Attenuation(0.0f, 0.0f, 1.0f);
+        PointLight pointLight = new PointLight(lightColor, lightPosition, lightIntensity);
+        pointLight.setAttenuation(attenuation);
 
         // Spot Lights
         Vector3f coneDirection = new Vector3f(0, -50, 0);
@@ -85,10 +100,10 @@ public class TestGame implements ILogic {
         lightIntensity = 50000f;
         lightColor = new Vector3f(0, 0.25f, 0);
         lightPosition = new Vector3f(1f, 50f, -5f);
-        SpotLight spotLight0 = new SpotLight(new PointLight(lightColor, lightPosition, lightIntensity, 0, 0, 1), coneDirection, cutoff);
+        SpotLight spotLight0 = new SpotLight(new PointLight(lightColor, lightPosition, lightIntensity, new PointLight.Attenuation(0, 0, 0.2f)), coneDirection, cutoff);
         lightColor = new Vector3f(0.25f, 0, 0);
         lightPosition = new Vector3f(1f, 50f, -5f);
-        SpotLight spotLight1 = new SpotLight(new PointLight(lightColor, lightPosition, lightIntensity, 0, 0, 1), coneDirection, cutoff);
+        SpotLight spotLight1 = new SpotLight(new PointLight(lightColor, lightPosition, lightIntensity, new PointLight.Attenuation(0, 0, 0.2f)), coneDirection, cutoff);
         spotLight1.getPointLight().setPosition(new Vector3f(0.5f, 0.5f, -3.6f));
 
         // Directional Light
@@ -143,11 +158,8 @@ public class TestGame implements ILogic {
         }
 
         double spotAngleRad = Math.toRadians(sceneManager.getSpotAngle());
-        Vector3f coneDir = sceneManager.getSpotLights()[0].getPointLight().getPosition();
-        coneDir.x = (float) Math.sin(spotAngleRad);
-
-        coneDir = sceneManager.getSpotLights()[1].getPointLight().getPosition();
-        coneDir.z = (float) Math.cos(spotAngleRad);
+        Vector3f coneDir = sceneManager.getSpotLights()[0].getConeDirection();
+        coneDir.y = (float) Math.cos(spotAngleRad);
 
         sceneManager.incLightAngle(1.1f);
         if(sceneManager.getLightAngle() > 90) {

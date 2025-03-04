@@ -23,13 +23,17 @@ struct DirectionalLight {
     float intensity;
 };
 
+struct Attenuation {
+    float constant;
+    float linear;
+    float exponent;
+};
+
 struct PointLight {
     vec3 color;
     vec3 position;
     float intensity;
-    float constant;
-    float linear;
-    float exponent;
+    Attenuation att;
 };
 
 struct SpotLight {
@@ -38,7 +42,12 @@ struct SpotLight {
     float cutoff;
 };
 
-uniform sampler2D textureSampler;
+uniform sampler2D backgroundTexture;
+uniform sampler2D redTexture;
+uniform sampler2D greenTexture;
+uniform sampler2D blueTexture;
+uniform sampler2D blendMap;
+
 uniform vec3 ambientLight;
 uniform Material material;
 uniform float specularPower;
@@ -51,8 +60,17 @@ vec4 diffuseC;
 vec4 specularC;
 
 void setupColors(Material material, vec2 textureCoords) {
-    if(material.hasTexture == 1) {
-        ambientC = texture(textureSampler, textureCoords);
+    if(material.hasTexture == 0) {
+
+        vec4 blendMapColor = texture(blendMap, textureCoords);
+        float backgroundTextureAmount = 1 - (blendMapColor.r + blendMapColor.g + blendMapColor.b);
+        vec2 tiledCoordinates = textureCoords / 2.5f;
+        vec4 backgroundTextureColor = texture(backgroundTexture, tiledCoordinates) * backgroundTextureAmount;
+        vec4 redTextureColor = texture(redTexture, tiledCoordinates) * blendMapColor.r;
+        vec4 greenTextureColor = texture(greenTexture, tiledCoordinates) * blendMapColor.g;
+        vec4 blueTextureColor = texture(blueTexture, tiledCoordinates) * blendMapColor.b;
+
+        ambientC = backgroundTextureColor + redTextureColor + greenTextureColor + blueTextureColor;
         diffuseC = ambientC;
         specularC = ambientC;
     }
@@ -89,7 +107,7 @@ vec4 calcPointLight(PointLight light, vec3 position, vec3 normal) {
 
     // Attenuation
     float distance = length(light_dir);
-    float attenuation_inv = light.constant + light.linear * distance + light.exponent * distance * distance;
+    float attenuation_inv = light.att.constant + light.att.linear * distance + light.att.exponent * distance * distance;
 
     return light_color / attenuation_inv;
 }

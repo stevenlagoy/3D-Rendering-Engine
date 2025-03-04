@@ -38,14 +38,10 @@ public class MouseInput {
         displVec.x = 0;
         displVec.y = 0;
         if(previousPos.x > 0 && previousPos.y > 0 && inWindow) {
-            double x = currentPos.x - previousPos.x;
-            double y = currentPos.y - previousPos.y;
-            boolean rotateX = x != 0;
-            boolean rotateY = y != 0;
-            if (rotateX)
-                displVec.y = (float) x;
-            if (rotateY)
-                displVec.x = (float) y;
+            double x = Math.min(Math.max(currentPos.x - previousPos.x, -100), 100);
+            double y = Math.min(Math.max(currentPos.y - previousPos.y, -100), 100);
+            if(x != 0) displVec.y = (float)x;
+            if(y != 0) displVec.x = (float)y;
         }
         previousPos.x = currentPos.x;
         previousPos.y = currentPos.y;

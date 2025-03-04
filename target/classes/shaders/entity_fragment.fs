@@ -23,13 +23,17 @@ struct DirectionalLight {
     float intensity;
 };
 
+struct Attenuation {
+    float constant;
+    float linear;
+    float exponent;
+};
+
 struct PointLight {
     vec3 color;
     vec3 position;
     float intensity;
-    float constant;
-    float linear;
-    float exponent;
+    Attenuation att;
 };
 
 struct SpotLight {
@@ -89,7 +93,7 @@ vec4 calcPointLight(PointLight light, vec3 position, vec3 normal) {
 
     // Attenuation
     float distance = length(light_dir);
-    float attenuation_inv = light.constant + light.linear * distance + light.exponent * distance * distance;
+    float attenuation_inv = light.att.constant + light.att.linear * distance + light.att.exponent * distance * distance;
 
     return light_color / attenuation_inv;
 }
