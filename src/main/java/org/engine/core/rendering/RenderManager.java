@@ -43,6 +43,9 @@ public class RenderManager {
             terrainRenderer = new TerrainRenderer();
             entityRenderer.init();
             terrainRenderer.init();
+
+            GL11.glEnable(GL11.GL_BLEND);
+            GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         }
     
         public static void renderLights(PointLight[] pointLights, SpotLight[] spotLights, DirectionalLight directionalLight, ShaderManager shader) {
@@ -104,7 +107,7 @@ public class RenderManager {
     }
 
     public void processTerrain(Terrain terrain) {
-        terrainRenderer.getTerrain().add(terrain);
+        if (terrain != null) terrainRenderer.getTerrain().add(terrain);
     }
 
     public void clear() {

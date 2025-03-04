@@ -9,13 +9,15 @@ public class Material {
     private float reflectance;
     private Texture texture;
     private boolean disableCulling;
+    private boolean hasTransparency;
 
-    public Material(Vector4f ambientColor, Vector4f diffuseColor, Vector4f specularColor, float reflectance, Texture texture) {
+    public Material(Vector4f ambientColor, Vector4f diffuseColor, Vector4f specularColor, float reflectance, Texture texture, boolean hasTransparency) {
         this.ambientColor = ambientColor;
         this.diffuseColor = diffuseColor;
         this.specularColor = specularColor;
         this.reflectance = reflectance;
         this.texture = texture;
+        this.hasTransparency = hasTransparency;
     }
 
     public Material() {
@@ -25,22 +27,35 @@ public class Material {
         this.reflectance = 0;
         this.texture = null;
         this.disableCulling = false;
+        this.hasTransparency = false;
     }
 
     public Material(Vector4f color, float reflectance) {
-        this(color, color, color, reflectance, null);
+        this(color, color, color, reflectance, null, false);
+    }
+
+    public Material(Vector4f color, float reflectance, boolean hasTransparency) {
+        this(color, color, color, reflectance, null, hasTransparency);
+    }
+
+    public Material(Vector4f color, float reflectance, Texture texture, boolean hasTransparency) {
+        this(color, color, color, reflectance, texture, hasTransparency);
     }
 
     public Material(Vector4f color, float reflectance, Texture texture) {
-        this(color, color, color, reflectance, texture);
+        this(color, color, color, reflectance, texture, false);
     }
 
     public Material(Texture texture) {
-        this(Consts.DEFAULT_COLOR, Consts.DEFAULT_COLOR, Consts.DEFAULT_COLOR, 0, texture);
+        this(Consts.DEFAULT_COLOR, Consts.DEFAULT_COLOR, Consts.DEFAULT_COLOR, 0, texture, false);
+    }
+
+    public Material(Texture texture, boolean hasTransparency) {
+        this(Consts.DEFAULT_COLOR, Consts.DEFAULT_COLOR, Consts.DEFAULT_COLOR, 0, texture, hasTransparency);
     }
 
     public Material(Texture texture, float reflectance) {
-        this(Consts.DEFAULT_COLOR, Consts.DEFAULT_COLOR, Consts.DEFAULT_COLOR, reflectance, texture);
+        this(Consts.DEFAULT_COLOR, Consts.DEFAULT_COLOR, Consts.DEFAULT_COLOR, reflectance, texture, false);
     }
 
     public Vector4f getAmbientColor() {
@@ -93,5 +108,13 @@ public class Material {
 
     public void setDisableCulling(boolean disableCulling) {
         this.disableCulling = disableCulling;
+    }
+
+    public boolean hasTransparency() {
+        return hasTransparency;
+    }
+
+    public void setTransparency(boolean hasTransparency) {
+        this.hasTransparency = hasTransparency;
     }
 }

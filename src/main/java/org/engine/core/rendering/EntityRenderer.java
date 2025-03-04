@@ -8,6 +8,7 @@ import org.engine.core.Camera;
 import org.engine.core.ShaderManager;
 import org.engine.core.Transformation;
 import org.engine.core.entity.Entity;
+import org.engine.core.entity.Material;
 import org.engine.core.entity.Model;
 import org.engine.core.lighting.DirectionalLight;
 import org.engine.core.lighting.PointLight;
@@ -72,7 +73,11 @@ public class EntityRenderer implements IRenderer {
         GL20.glEnableVertexAttribArray(1);
         GL20.glEnableVertexAttribArray(2);
 
-        if(model.getMaterial().isDisableCulling()){
+        Material material = model.getMaterial();
+        if (material.hasTransparency()) {
+            RenderManager.disableCulling();
+        }
+        else if (material.isDisableCulling()) {
             RenderManager.disableCulling();
         }
         else {

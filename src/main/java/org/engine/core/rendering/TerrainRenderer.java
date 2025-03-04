@@ -9,6 +9,7 @@ import org.engine.core.Camera;
 import org.engine.core.ShaderManager;
 import org.engine.core.Transformation;
 import org.engine.core.entity.Entity;
+import org.engine.core.entity.Material;
 import org.engine.core.entity.Model;
 import org.engine.core.entity.terrain.Terrain;
 import org.engine.core.lighting.DirectionalLight;
@@ -58,6 +59,13 @@ public class TerrainRenderer implements IRenderer {
         shader.bind();
         shader.setUniform("projectionMatrix", Launcher.getWindow().updateProjectionMatrix());
         RenderManager.renderLights(pointLights, spotLights, directionalLight, shader);
+
+        terrains.sort((t1, t2) -> {
+            float dist1 = camera.getPosition().distance(t1.getPosition());
+            float dist2 = camera.getPosition().distance(t2.getPosition());
+            return Float.compare(dist2, dist1);
+        });
+
         for (Terrain terrain : terrains) {
             bind(terrain.getModel());
             prepare(terrain, camera);
@@ -75,7 +83,13 @@ public class TerrainRenderer implements IRenderer {
         GL20.glEnableVertexAttribArray(1);
         GL20.glEnableVertexAttribArray(2);
 
-        RenderManager.enableCulling();
+        Material material = model.getMaterial();
+        if (material.hasTransparency()) {
+            RenderManager.disableCulling();
+        }
+        else {
+            RenderManager.enableCulling();
+        }
 
         shader.setUniform("backgroundTexture", 0);
         shader.setUniform("redTexture", 1);

@@ -1,14 +1,7 @@
 package org.engine.game;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
-import org.joml.Vector2f;
-import org.joml.Vector3f;
-import org.joml.Vector4f;
-import org.lwjgl.glfw.GLFW;
-import org.lwjgl.opengl.GL11;
 import org.engine.core.Camera;
 import org.engine.core.ILogic;
 import org.engine.core.MouseInput;
@@ -27,6 +20,10 @@ import org.engine.core.lighting.PointLight;
 import org.engine.core.lighting.SpotLight;
 import org.engine.core.rendering.RenderManager;
 import org.engine.utils.Consts;
+import org.joml.Vector2f;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
+import org.lwjgl.glfw.GLFW;
 
 public class TestGame implements ILogic {
 
@@ -52,22 +49,38 @@ public class TestGame implements ILogic {
         renderer.init();
 
         Model model = loader.loadOBJModel("/models/tree.obj");
-        model.getMaterial().setDisableCulling(true);
-        model.setTexture(new Texture(loader.loadTexture("textures/green.png")), 1f);
+        model.getMaterial().setDisableCulling(false);
+        model.getMaterial().setTransparency(true);
+        model.setTexture(new Texture(loader.loadTexture("textures/green_transparent.png")), 1f);
+
+        Material terrainMaterial = new Material(new Vector4f(1.0f, 1.0f, 1.0f, 0.5f), 0.0f);
+        terrainMaterial.setTransparency(true);
 
         TerrainTexture backgroundTexture = new TerrainTexture(loader.loadTexture("textures/terrain.png"));
         TerrainTexture redTexture = new TerrainTexture(loader.loadTexture("textures/flowers.png"));
-        TerrainTexture greenTexture = new TerrainTexture(loader.loadTexture("textures/stone.png"));
+        TerrainTexture greenTexture = new TerrainTexture(loader.loadTexture("textures/green_transparent.png"));
         TerrainTexture blueTexture = new TerrainTexture(loader.loadTexture("textures/dirt.png"));
         TerrainTexture blendMap = new TerrainTexture(loader.loadTexture("textures/blendMap.png"));
 
         BlendMapTerrain blendMapTerrain = new BlendMapTerrain(backgroundTexture, redTexture, greenTexture, blueTexture);
 
-        Terrain terrain = new Terrain(new Vector3f(0, 1, -800), loader,
-            new Material(new Vector4f(0.0f, 0.0f, 0.0f, 0.0f), 0.1f), blendMapTerrain, blendMap);
-        Terrain terrain2 = new Terrain(new Vector3f(-800, -1, -800), loader,
-            new Material(new Vector4f(0.0f, 0.0f, 0.0f, 0.0f), 0.1f), blendMapTerrain, blendMap);
-        sceneManager.addTerrain(terrain); sceneManager.addTerrain(terrain2);
+        Terrain terrain = new Terrain(
+            new Vector3f(-400, 0, -800),
+            loader, 
+            terrainMaterial,
+            blendMapTerrain,
+            blendMap
+        );
+        
+        sceneManager.addTerrain(terrain);
+        renderer.processTerrain(terrain);
+        
+        sceneManager.addEntity(new Entity(
+            model,
+            new Vector3f(0, 0, -25f),
+            new Vector3f(-90, 0, 0),
+            1f) 
+        );
 
         Random rand = new Random();
         int factor = 300;

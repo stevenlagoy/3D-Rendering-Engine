@@ -65,12 +65,14 @@ void setupColors(Material material, vec2 textureCoords) {
         vec4 blendMapColor = texture(blendMap, textureCoords);
         float backgroundTextureAmount = 1 - (blendMapColor.r + blendMapColor.g + blendMapColor.b);
         vec2 tiledCoordinates = textureCoords / 2.5f;
+        
         vec4 backgroundTextureColor = texture(backgroundTexture, tiledCoordinates) * backgroundTextureAmount;
         vec4 redTextureColor = texture(redTexture, tiledCoordinates) * blendMapColor.r;
         vec4 greenTextureColor = texture(greenTexture, tiledCoordinates) * blendMapColor.g;
         vec4 blueTextureColor = texture(blueTexture, tiledCoordinates) * blendMapColor.b;
 
         ambientC = backgroundTextureColor + redTextureColor + greenTextureColor + blueTextureColor;
+        ambientC.a = material.ambient.a;
         diffuseC = ambientC;
         specularC = ambientC;
     }
