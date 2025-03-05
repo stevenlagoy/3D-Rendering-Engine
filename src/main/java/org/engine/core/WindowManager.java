@@ -24,7 +24,7 @@ public class WindowManager {
 
     private boolean resize, vSync;
 
-    private final Matrix4f projectionMatrix;
+    private Matrix4f projectionMatrix;
 
     public WindowManager(String title, int width, int height, boolean vSync) {
         this.title = title;
@@ -50,13 +50,13 @@ public class WindowManager {
 
         boolean maximized = false;
         if(width == 0 || height == 0) {
-            width = 100;
-            height = 100;
+            width = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor()).width();
+            height = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor()).height();
             GLFW.glfwWindowHint(GLFW.GLFW_MAXIMIZED, GLFW.GLFW_TRUE);
             maximized = true;
         }
 
-        window = GLFW.glfwCreateWindow(width, height, title, MemoryUtil.NULL, MemoryUtil.NULL);
+        window = glfwCreateWindow(width, height, title, resize ? glfwGetPrimaryMonitor() : 0, 0);
         if(window == MemoryUtil.NULL)
             throw new RuntimeException("Failed to create GLFW window");
 
@@ -67,7 +67,7 @@ public class WindowManager {
         });
 
         GLFW.glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
-            System.out.println("Key pressed: " + key + ", action: " + action);
+            // System.out.println("Key pressed: " + key + ", action: " + action);
             if(key == GLFW.GLFW_KEY_ESCAPE && action == GLFW.GLFW_RELEASE)
                 GLFW.glfwSetWindowShouldClose(window, true);
         });
@@ -85,6 +85,8 @@ public class WindowManager {
         if(isvSync())
             GLFW.glfwSwapInterval(1);
 
+        updateProjectionMatrix();
+
         GLFW.glfwShowWindow(window);
 
         GL.createCapabilities();
@@ -97,6 +99,10 @@ public class WindowManager {
     }
 
     public void update() {
+        if(resize) {
+            GL11.glViewport(0, 0, width, height);
+            resize = false;
+        }
         GLFW.glfwSwapBuffers(window);
         GLFW.glfwPollEvents();
     }
@@ -157,11 +163,21 @@ public class WindowManager {
 
     public Matrix4f updateProjectionMatrix() {
         float aspectRatio = (float) width / height;
-        return projectionMatrix.setPerspective(Consts.FOV, aspectRatio, Consts.Z_NEAR, Consts.Z_FAR);
+        return projectionMatrix.identity().perspective(
+            Consts.FOV,
+            aspectRatio,
+            Consts.Z_NEAR,
+            Consts.Z_FAR
+        );
     }
 
     public Matrix4f updateProjectionMatrix(Matrix4f matrix, int width, int height){
         float aspectRatio = (float) width / height;
-        return matrix.setPerspective(Consts.FOV, aspectRatio, Consts.Z_NEAR, Consts.Z_FAR);
+        return matrix.identity().perspective(
+            Consts.FOV,
+            aspectRatio,
+            Consts.Z_NEAR,
+            Consts.Z_FAR
+        );
     }
 }

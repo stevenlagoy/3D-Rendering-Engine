@@ -72,8 +72,11 @@ public class RenderManager {
     
             if(window.isResize()){
                 GL11.glViewport(0, 0, window.getWidth(), window.getHeight());
-                window.setResize(true);
+                window.setResize(false);
             }
+
+            window.getProjectionMatrix().identity();
+            window.updateProjectionMatrix();
     
             entityRenderer.render(camera, scene.getPointLights(), scene.getSpotLights(), scene.getDirectionalLight());
             terrainRenderer.render(camera, scene.getPointLights(), scene.getSpotLights(), scene.getDirectionalLight());

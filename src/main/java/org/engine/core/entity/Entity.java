@@ -1,5 +1,6 @@
 package org.engine.core.entity;
 
+import org.engine.core.entity.ModelManager.ModelInfo;
 import org.joml.Vector3f;
 
 public class Entity {
@@ -13,6 +14,14 @@ public class Entity {
         this.pos = pos;
         this.rotation = rotation;
         this.scale = scale;
+    }
+
+    public Entity(Model model, Vector3f pos) {
+        ModelInfo modelInfo = ModelManager.getModelInfo(model);
+        this.model = model;
+        this.pos = pos;
+        this.rotation = modelInfo.getRotation();
+        this.scale = modelInfo.getScale();
     }
 
     public void incPos(float x, float y, float z) {

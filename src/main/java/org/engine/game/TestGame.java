@@ -10,8 +10,10 @@ import org.engine.core.WindowManager;
 import org.engine.core.entity.Entity;
 import org.engine.core.entity.Material;
 import org.engine.core.entity.Model;
+import org.engine.core.entity.ModelManager;
 import org.engine.core.entity.SceneManager;
 import org.engine.core.entity.Texture;
+import org.engine.core.entity.TextureManager;
 import org.engine.core.entity.terrain.BlendMapTerrain;
 import org.engine.core.entity.terrain.Terrain;
 import org.engine.core.entity.terrain.TerrainTexture;
@@ -40,93 +42,83 @@ public class TestGame implements ILogic {
         window = Launcher.getWindow();
         loader = new ObjectLoader();
         sceneManager = new SceneManager(-90);
-        camera = new Camera(new Vector3f(0, 0, 0), new Vector3f(0, 0, 0));
+        camera = new Camera(new Vector3f(0, 100, 300), new Vector3f(0, 0, 0));
         cameraInc = new Vector3f(0, 0, 0);
     }
 
     @Override
     public void init() throws Exception {
         renderer.init();
-
-        Model model = loader.loadOBJModel("/models/tree.obj");
-        model.getMaterial().setDisableCulling(false);
-        model.getMaterial().setTransparency(true);
-        model.setTexture(new Texture(loader.loadTexture("textures/green_transparent.png")), 1f);
+        ModelManager.loadModelFiles();
+        TextureManager.loadTextureFiles();
 
         Material terrainMaterial = new Material(new Vector4f(1.0f, 1.0f, 1.0f, 0.5f), 0.0f);
-        terrainMaterial.setTransparency(true);
-
-        TerrainTexture backgroundTexture = new TerrainTexture(loader.loadTexture("textures/terrain.png"));
-        TerrainTexture redTexture = new TerrainTexture(loader.loadTexture("textures/flowers.png"));
-        TerrainTexture greenTexture = new TerrainTexture(loader.loadTexture("textures/green_transparent.png"));
-        TerrainTexture blueTexture = new TerrainTexture(loader.loadTexture("textures/dirt.png"));
+        TerrainTexture backgroundTexture = new TerrainTexture(loader.loadTexture("textures/grass.png"));
+        TerrainTexture redTerrainTexture = new TerrainTexture(loader.loadTexture("textures/red.png"));
+        TerrainTexture greenTerrainTexture = new TerrainTexture(loader.loadTexture("textures/green.png"));
+        TerrainTexture blueTerrainTexture = new TerrainTexture(loader.loadTexture("textures/blue.png"));
         TerrainTexture blendMap = new TerrainTexture(loader.loadTexture("textures/blendMap.png"));
 
-        BlendMapTerrain blendMapTerrain = new BlendMapTerrain(backgroundTexture, redTexture, greenTexture, blueTexture);
-
-        Terrain terrain = new Terrain(
-            new Vector3f(-400, 0, -800),
-            loader, 
-            terrainMaterial,
-            blendMapTerrain,
-            blendMap
-        );
-        
-        sceneManager.addTerrain(terrain);
-        renderer.processTerrain(terrain);
-        
-        sceneManager.addEntity(new Entity(
-            model,
-            new Vector3f(0, 0, -25f),
-            new Vector3f(-90, 0, 0),
-            1f) 
-        );
-
-        Random rand = new Random();
-        int factor = 300;
-        for (int i = 0; i < 2 * factor; i++) {
-            float x = rand.nextFloat() * factor - (factor / 2);
-            float y = rand.nextFloat() * factor - (factor / 2);
-            float z = rand.nextFloat() * (-3 * factor);
-            sceneManager.addEntity(new Entity(
-                model,
-                new Vector3f(x, 2, z),
-                new Vector3f(-90, 0, 0),
-                0.1f)
-            );
+        BlendMapTerrain blendMapTerrain = new BlendMapTerrain(backgroundTexture, redTerrainTexture, greenTerrainTexture, blueTerrainTexture);
+        for (int i = -5; i < 5; i++) {
+            for (int j = -5; j < 5; j++) {
+                sceneManager.addTerrain(new Terrain(new Vector3f(800 * i, 0, 800 * j), loader, terrainMaterial, blendMapTerrain, blendMap));
+            }
         }
 
+        Model cubeModel = ModelManager.getModel("cube");
+        Model treeModel = ModelManager.getModel("tree");
+        Model bunnyModel = ModelManager.getModel("bunny");
+        Model teapotModel = ModelManager.getModel("teapot");
+        Model cowModel = ModelManager.getModel("cow");
+        Model pumpkinModel = ModelManager.getModel("pumpkin");
+        Model teddyBearModel = ModelManager.getModel("teddyBear");
+
+        Texture redTexture = TextureManager.getTexture("red");
+        cubeModel.setTexture(redTexture);
+
+        Texture greenTexture = TextureManager.getTexture("green");
+        treeModel.setTexture(greenTexture);
+
+        Texture whiteTexture = TextureManager.getTexture("white");
+        bunnyModel.setTexture(whiteTexture);
+
+        Texture blackTexture = TextureManager.getTexture("black");
+        teapotModel.setTexture(blackTexture);
+
+        Texture yellowTexture = TextureManager.getTexture("yellow");
+        cowModel.setTexture(yellowTexture);
+
+        Texture purpleTexture = TextureManager.getTexture("purple");
+        pumpkinModel.setTexture(purpleTexture);
+
+        Texture orangeTexture = TextureManager.getTexture("orange");
+        teddyBearModel.setTexture(orangeTexture);
+
+        Entity cube = new Entity(cubeModel, new Vector3f(200, 50, 0));
+        Entity tree = new Entity(treeModel, new Vector3f(0, 0, 0));
+        Entity bunny = new Entity(bunnyModel, new Vector3f(400, 0, 0));
+        Entity teapot = new Entity(teapotModel, new Vector3f(600, 0, 0));
+        Entity cow = new Entity(cowModel, new Vector3f(800, 80, 0));
+        Entity pumpkin = new Entity(pumpkinModel, new Vector3f(1000, 150, 0));
+        Entity teddyBear = new Entity(teddyBearModel, new Vector3f(1200, 50, 0));
+
+        sceneManager.addEntity(cube);
+        sceneManager.addEntity(tree);
+        sceneManager.addEntity(bunny);
+        sceneManager.addEntity(teapot);
+        sceneManager.addEntity(cow);
+        sceneManager.addEntity(pumpkin);
+        sceneManager.addEntity(teddyBear);
+
         float lightIntensity;
-        Vector3f lightPosition, lightColor;
-
-        // Point Lights
-        lightIntensity = 50000f;
-        lightPosition = new Vector3f(0f, -50f, 0f);
-        lightColor = new Vector3f(1, 1, 1);
-        PointLight.Attenuation attenuation = new PointLight.Attenuation(0.0f, 0.0f, 1.0f);
-        PointLight pointLight = new PointLight(lightColor, lightPosition, lightIntensity);
-        pointLight.setAttenuation(attenuation);
-
-        // Spot Lights
-        Vector3f coneDirection = new Vector3f(0, -50, 0);
-        float cutoff = (float) Math.cos(Math.toRadians(1));
-        lightIntensity = 50000f;
-        lightColor = new Vector3f(0, 0.25f, 0);
-        lightPosition = new Vector3f(1f, 50f, -5f);
-        SpotLight spotLight0 = new SpotLight(new PointLight(lightColor, lightPosition, lightIntensity, new PointLight.Attenuation(0, 0, 0.2f)), coneDirection, cutoff);
-        lightColor = new Vector3f(0.25f, 0, 0);
-        lightPosition = new Vector3f(1f, 50f, -5f);
-        SpotLight spotLight1 = new SpotLight(new PointLight(lightColor, lightPosition, lightIntensity, new PointLight.Attenuation(0, 0, 0.2f)), coneDirection, cutoff);
-        spotLight1.getPointLight().setPosition(new Vector3f(0.5f, 0.5f, -3.6f));
+        Vector3f lightPosition, lightColor, lightDirection;
 
         // Directional Light
         lightIntensity = 1;
         lightPosition = new Vector3f(-1, 0, 0);
         lightColor = new Vector3f(1, 1, 1);
         sceneManager.setDirectionalLight(new DirectionalLight(lightColor, lightPosition, lightIntensity));
-
-        sceneManager.setPointLights(new PointLight[] {pointLight});
-        sceneManager.setSpotLights(new SpotLight[] {spotLight0, spotLight1});
     }
 
     @Override
@@ -161,41 +153,14 @@ public class TestGame implements ILogic {
             camera.moveRotation(rotVec.x * Consts.MOUSE_SENSITIVITY, rotVec.y * Consts.MOUSE_SENSITIVITY, 0);
         }
 
-        sceneManager.incSpotAngle(0.15f);
-        sceneManager.setSpotAngle(sceneManager.getSpotInc() * 0.15f);
-        if (sceneManager.getSpotAngle() > 4) {
-            sceneManager.setSpotInc(-1);
-        }
-        else if (sceneManager.getSpotAngle() < 1) {
-            sceneManager.setSpotInc(1);
-        }
-
-        double spotAngleRad = Math.toRadians(sceneManager.getSpotAngle());
-        Vector3f coneDir = sceneManager.getSpotLights()[0].getConeDirection();
-        coneDir.y = (float) Math.cos(spotAngleRad);
-
-        sceneManager.incLightAngle(1.1f);
-        if(sceneManager.getLightAngle() > 90) {
-            sceneManager.getDirectionalLight().setIntensity(0);
-            if (sceneManager.getLightAngle() >= 360)
-                sceneManager.setLightAngle(-90);
-        }
-        else if (sceneManager.getLightAngle() <= -80 || sceneManager.getLightAngle() >= 80) {
-            float factor = 1 - (Math.abs(sceneManager.getLightAngle()) - 80) / 10.0f;
-            sceneManager.getDirectionalLight().setIntensity(factor);
-            sceneManager.getDirectionalLight().getColor().y = Math.max(factor, 0.9f);
-            sceneManager.getDirectionalLight().getColor().z = Math.max(factor, 0.5f);
-        }
-        else {
-            sceneManager.getDirectionalLight().setIntensity(1);
-            sceneManager.getDirectionalLight().getColor().x = 1;
-            sceneManager.getDirectionalLight().getColor().y = 1;
-            sceneManager.getDirectionalLight().getColor().z = 1;        
-        }
-        double angRad = Math.toRadians(sceneManager.getLightAngle());
-        sceneManager.getDirectionalLight().getDirection().x = (float)Math.sin(angRad);
-        sceneManager.getDirectionalLight().getDirection().y = (float)Math.cos(angRad);
-
+        sceneManager.getEntities().get(0).incRotation(0, 0.5f, 0);
+        sceneManager.getEntities().get(1).incRotation(0, 0, 0.5f);
+        sceneManager.getEntities().get(2).incRotation(0, 0.5f, 0);
+        sceneManager.getEntities().get(3).incRotation(0, 0.5f, 0);
+        sceneManager.getEntities().get(4).incRotation(0, 0.5f, 0);
+        sceneManager.getEntities().get(5).incRotation(0, 0, 0.5f);
+        sceneManager.getEntities().get(6).incRotation(0, 0.5f, 0);
+        // Render entities and terrains
         for (Entity entity : sceneManager.getEntities()) {
             renderer.processEntity(entity);
         }
@@ -215,7 +180,4 @@ public class TestGame implements ILogic {
         renderer.cleanup();
         loader.cleanup();
     }
-    
-
-    
 }
